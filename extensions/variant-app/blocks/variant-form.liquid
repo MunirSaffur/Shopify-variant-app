@@ -5,107 +5,117 @@
     assign target = product
   endif
 
-  assign compare_at_price = target.compare_at_price
   assign price = target.price | default: 1999
-  assign available = target.available | default: false
-  assign money_price = price | money
-  if settings.currency_code_enabled
-    assign money_price = price | money_with_currency
-  endif
-
-  if target == product and product.price_varies
-    assign money_price = 'products.product.price.from_price_html' | t: price: money_price
-  endif
 -%}
 
 <div class="custom-product-form" id="custom-product-form-{{ block.id }}">
   <label for="boyen-{{ block.id }}">Boy x En</label>
-  <select id="boyen-{{ block.id }}" name="boyen" required>
+  <select id="boyen-{{ block.id }}" name="boyen">
     <option value="">Seçiniz</option>
   </select>
 
   <label for="materyal-{{ block.id }}">Materyal</label>
-  <select id="materyal-{{ block.id }}" name="materyal" required>
+  <select id="materyal-{{ block.id }}" name="materyal">
     <option value="">Seçiniz</option>
   </select>
 
   <p class="custom-form-error" style="color:red; display:none;">Lütfen tüm alanları doldurunuz.</p>
-
-  <button type="button" class="custom-add-to-cart">Sepete Ekle</button>
+  <p class="estimated-price" style="font-weight:bold; margin-top:10px; display:none;"></p>
 </div>
 
 <script>
-  document.addEventListener("DOMContentLoaded", async function () {
-    const container = document.getElementById("custom-product-form-{{ block.id }}");
-    if (!container) return;
+document.addEventListener("DOMContentLoaded", async () => {
+  const container = document.getElementById("custom-product-form-{{ block.id }}");
+  if (!container) return;
 
-    const boyEnSelect = container.querySelector("#boyen-{{ block.id }}");
-    const materyalSelect = container.querySelector("#materyal-{{ block.id }}");
-    const addToCartBtn = container.querySelector(".custom-add-to-cart");
-    const errorBox = container.querySelector(".custom-form-error");
+  const dimensionSelector = container.querySelector("#boyen-{{ block.id }}");
+  const materyalSelector = container.querySelector("#materyal-{{ block.id }}");
+  const errorBox = container.querySelector(".custom-form-error");
+  const estimatedPrice = container.querySelector(".estimated-price");
 
-    let variantData = null;
+  const basePrice = {{ price | json }};
+  let currentMultiple = 1;
+  let materialExtra = 0;
 
-    const API_URL = "https://fall-video-ind-factor.trycloudflare.com";
-    try {
-      const res = await fetch(API_URL + "/api/custom-variants");
-      const json = await res.json();
-      variantData = json.data;
+  // price formatting logic
+  function formatMoney(cents) {
+    return (cents / 100).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
 
-      // set dimensions
-      variantData.dimension.forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.option;
-        let price = {{ money_price | times: 1.0 | json }};
-        opt.textContent = item.option; 
-        opt.dataset.multiple = item.multiple;
-        boyEnSelect.appendChild(opt);
-      });
-
-      // Set mateials
-      variantData.material.forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.option;
-        opt.textContent = item.option;
-        opt.dataset.price = item.price;
-        materyalSelect.appendChild(opt);
-      });
-    } catch (err) {
-      console.error("Faild to get variants:", err);
+  // price estimating update
+  function updateEstimatedPrice() {
+    if (!dimensionSelector.value && !materyalSelector.value) {
+      estimatedPrice.style.display = "none";
+      return;
     }
+    const est = (basePrice * currentMultiple) + materialExtra;
+    estimatedPrice.textContent = "Estimated price: " + formatMoney(est);
+    estimatedPrice.style.display = "block";
+  }
 
-    addToCartBtn.addEventListener("click", async () => {
-      const boyEnOpt = boyEnSelect.options[boyEnSelect.selectedIndex];
-      const materyalOpt = materyalSelect.options[materyalSelect.selectedIndex];
+  // get variant data from app server
+  try {
+    const res = await fetch("https://fall-video-ind-factor.trycloudflare.com/api/custom-variants");
+    const json = await res.json();
+    const data = json.data;
 
-      if (!boyEnOpt.value || !materyalOpt.value) {
+    data.dimension.forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.option;
+      opt.textContent = item.option;
+      opt.dataset.multiple = item.multiple;
+      dimensionSelector.appendChild(opt);
+    });
+
+    data.material.forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.option;
+      opt.textContent = item.option;
+      opt.dataset.price = item.price * 100; // convert to cents
+      materyalSelector.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("Variant load failed", e);
+  }
+
+  // update price on variant change
+  dimensionSelector.addEventListener("change", e => {
+    currentMultiple = parseFloat(e.target.selectedOptions[0].dataset.multiple || 1);
+    updateEstimatedPrice();
+  });
+
+  materyalSelector.addEventListener("change", e => {
+    materialExtra = parseFloat(e.target.selectedOptions[0].dataset.price || 0);
+    updateEstimatedPrice();
+  });
+
+  //  Add to Cart logic
+  const addBtn = document.querySelector("form[action*='/cart/add'] [type='submit']");
+  if (addBtn) {
+    addBtn.addEventListener("click", e => {
+      if (!dimensionSelector.value || !materyalSelect.value) {
+        e.preventDefault();
         errorBox.style.display = "block";
-        return;
       } else {
         errorBox.style.display = "none";
+        const form = addBtn.closest("form");
+        ["Boy x En","Materyal"].forEach(name => {
+          const old = form.querySelector(`input[name="properties[${name}]"]`);
+          if (old) old.remove();
+        });
+        const bx = document.createElement("input");
+        bx.type="hidden"; bx.name="properties[Boy x En]"; bx.value=boyEnSelect.value;
+        form.appendChild(bx);
+        const mt = document.createElement("input");
+        mt.type="hidden"; mt.name="properties[Materyal]"; mt.value=materyalSelect.value;
+        form.appendChild(mt);
       }
-
-      const properties = {
-        "Boy x En": boyEnOpt.value,
-        "Materyal": materyalOpt.value,
-      };
-
-      // Add to cart logic
-      await fetch("/cart/add.js", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: [{
-            id: {{ block.settings.product.selected_or_first_available_variant.id }},
-            quantity: 1,
-            properties: properties
-          }]
-        })
-      });
-
-      window.location.href = "/cart";
     });
-  });
+  }
+});
 </script>
 
 <style>
@@ -124,17 +134,9 @@
     border-radius: 6px;
   }
 
-  .custom-add-to-cart {
-    background: #000;
-    color: #fff;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-
-  .custom-add-to-cart:hover {
-    background: #333;
+  .estimated-price {
+    font-size: 16px;
+    color: #222;
   }
 
   @media (max-width: 768px) {
