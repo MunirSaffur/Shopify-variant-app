@@ -11,13 +11,15 @@ import {
   DataTable,
   Frame,
   Toast,
+  Text,
+  LegacyCard
 } from "@shopify/polaris";
-import React, {useEffect, useState} from 'react'
+import React, {useEffect} from 'react'
 
 /* ----------------- Loader ----------------- */
 export const loader = async () => {
   try {
-    const dimension = await db.dimension.findMany({ select: { id: true, option: true, price: true } });
+    const dimension = await db.dimension.findMany({ select: { id: true, option: true, multiple: true } });
     const material = await db.material.findMany({ select: { id: true, option: true, price: true } });
     return json({ dimension, material });
   } catch (err) {
@@ -42,7 +44,7 @@ export const action = async ({ request }) => {
     return json({ ok: true, message: "Changes saved successfully ✅" });
   } catch (err) {
     console.error("Action error:", err);
-    return json({ ok: false, message: "Something went wrong ❌" }, { status: 500 });
+    return json({ ok: false, message: `Something went wrong: ${err}` }, { status: 500 });
   }
 };
 
@@ -51,11 +53,11 @@ export default function AdminCustomVariants() {
   const data = useLoaderData();
   const actionData = useActionData();
 
-  const [boyEnList, setBoyEnList] = useState(data.dimension);
+  const [dimensionsList, setDimensionsList] = useState(data.dimension);
   const [materialList, setMaterialList] = useState(data.material);
 
-  const [newBoyEn, setNewBoyEn] = useState("");
-  const [newBoyEnPrice, setNewBoyEnPrice] = useState("");
+  const [newDimension, setNewDimension] = useState("");
+  const [newDimensionPrice, setNewDimensionPrice] = useState("");
   const [newMaterial, setNewMaterial] = useState("");
   const [newMaterialPrice, setNewMaterialPrice] = useState("");
 
@@ -73,11 +75,11 @@ export default function AdminCustomVariants() {
   }, [actionData]);
 
   const addBoyEn = () => {
-    if (!newBoyEn || !newBoyEnPrice) return;
-    setBoyEnList([...boyEnList, { option: newBoyEn, price: parseInt(newBoyEnPrice) }]);
-    setNewBoyEn("");
-    setNewBoyEnPrice("");
-    setToastMsg("Boy x En option added ✅");
+    if (!newDimension || !newDimensionPrice) return;
+    setDimensionsList([...dimensionsList, { option: newDimension, multiple: parseInt(newDimensionPrice) }]);
+    setNewDimension("");
+    setNewDimensionPrice("");
+    setToastMsg("✅ Dimension option added, click on Save Changes");
     setToastActive(true);
   };
 
@@ -86,19 +88,19 @@ export default function AdminCustomVariants() {
     setMaterialList([...materialList, { option: newMaterial, price: parseInt(newMaterialPrice) }]);
     setNewMaterial("");
     setNewMaterialPrice("");
-    setToastMsg("Material option added ✅");
+    setToastMsg("✅ Material option added, click on Save Changes");
     setToastActive(true);
   };
 
   const deleteBoyEn = (index) => {
-    setBoyEnList(boyEnList.filter((_, i) => i !== index));
-    setToastMsg("Boy x En option deleted ❌");
+    setDimensionsList(dimensionsList.filter((_, i) => i !== index));
+    setToastMsg("Dimension removed from the list, click on Save Changes");
     setToastActive(true);
   };
 
   const deleteMaterial = (index) => {
     setMaterialList(materialList.filter((_, i) => i !== index));
-    setToastMsg("Material option deleted ❌");
+    setToastMsg("Material removed from the list, click on Save Changes");
     setToastActive(true);
   };
 
@@ -108,38 +110,42 @@ export default function AdminCustomVariants() {
         <Form method="post">
           <Card sectioned>
             <FormLayout>
-              <h3>Boy x En Options</h3>
-              <TextField label="Option" value={newBoyEn} onChange={setNewBoyEn} />
-              <TextField label="Price" type="number" value={newBoyEnPrice} onChange={setNewBoyEnPrice} />
+              <Text variant="headingLg" as="h4">Dimension Options</Text>
+              <TextField label="Option" value={newDimension} onChange={setNewDimension} />
+              <TextField label="multiple" type="number" value={newDimensionPrice} onChange={setNewDimensionPrice} />
               <Button primary onClick={addBoyEn}>Add</Button>
 
+            <LegacyCard>
               <DataTable
                 columnContentTypes={["text","text","text"]}
-                headings={["Option","Price","Actions"]}
-                rows={boyEnList.map((item,i)=>[
+                headings={["Variant","Multiple","Actions"]}
+                rows={dimensionsList.map((item,i)=>[
                   item.option,
-                  item.price,
-                  <Button destructive size="slim" onClick={()=>deleteBoyEn(i)}>Delete</Button>
+                  item.multiple,
+                  <Button destructive size="slim" onClick={()=>deleteBoyEn(i)}>Remove</Button>
                 ])}
               />
+              </LegacyCard>
 
-              <h3>Material Options</h3>
+              <Text variant="headingLg" as="h4">Material Options</Text>
               <TextField label="Material" value={newMaterial} onChange={setNewMaterial} />
               <TextField label="Price" type="number" value={newMaterialPrice} onChange={setNewMaterialPrice} />
               <Button primary onClick={addMaterial}>Add</Button>
 
+            <LegacyCard>
               <DataTable
                 columnContentTypes={["text","text","text"]}
                 headings={["Material","Price","Actions"]}
                 rows={materialList.map((item,i)=>[
                   item.option,
                   item.price,
-                  <Button destructive size="slim" onClick={()=>deleteMaterial(i)}>Delete</Button>
+                  <Button destructive size="slim" onClick={()=>deleteMaterial(i)}>Remove</Button>
                 ])}
               />
+            </LegacyCard>
 
               {/* Hidden fields for form submission */}
-              <input type="hidden" name="dimension" value={JSON.stringify(boyEnList)} />
+              <input type="hidden" name="dimension" value={JSON.stringify(dimensionsList)} />
               <input type="hidden" name="material" value={JSON.stringify(materialList)} />
 
               <Button primary submit>Save Changes</Button>

@@ -35,7 +35,7 @@ model Session {
 model Dimension {
   id      Int    @id @default(autoincrement())
   option  String
-  price   Int
+  multiple   Int
 }
 
 model Material {

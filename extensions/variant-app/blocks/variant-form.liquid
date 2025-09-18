@@ -1,3 +1,23 @@
+{%- liquid
+  if use_variant
+    assign target = product.selected_or_first_available_variant
+  else
+    assign target = product
+  endif
+
+  assign compare_at_price = target.compare_at_price
+  assign price = target.price | default: 1999
+  assign available = target.available | default: false
+  assign money_price = price | money
+  if settings.currency_code_enabled
+    assign money_price = price | money_with_currency
+  endif
+
+  if target == product and product.price_varies
+    assign money_price = 'products.product.price.from_price_html' | t: price: money_price
+  endif
+-%}
+
 <div class="custom-product-form" id="custom-product-form-{{ block.id }}">
   <label for="boyen-{{ block.id }}">Boy x En</label>
   <select id="boyen-{{ block.id }}" name="boyen" required>
@@ -26,18 +46,19 @@
 
     let variantData = null;
 
-    const API_URL = "https://consumption-stated-scholarships-posts.trycloudflare.com";
+    const API_URL = "https://fall-video-ind-factor.trycloudflare.com";
     try {
       const res = await fetch(API_URL + "/api/custom-variants");
       const json = await res.json();
       variantData = json.data;
 
       // set dimensions
-      variantData.boy_en.forEach(item => {
+      variantData.dimension.forEach(item => {
         const opt = document.createElement("option");
         opt.value = item.option;
-        opt.textContent = `${item.option} (${item.price}{{ cart.currency.symbol }})`;
-        opt.dataset.price = item.price;
+        let price = {{ money_price | times: 1.0 | json }};
+        opt.textContent = item.option; 
+        opt.dataset.multiple = item.multiple;
         boyEnSelect.appendChild(opt);
       });
 
@@ -45,7 +66,7 @@
       variantData.material.forEach(item => {
         const opt = document.createElement("option");
         opt.value = item.option;
-        opt.textContent = `${item.option} (${item.price} {{ cart.currency.symbol }})`;
+        opt.textContent = item.option;
         opt.dataset.price = item.price;
         materyalSelect.appendChild(opt);
       });
