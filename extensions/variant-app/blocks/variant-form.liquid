@@ -1,0 +1,132 @@
+<div class="custom-product-form" id="custom-product-form-{{ block.id }}">
+  <label for="boyen-{{ block.id }}">Boy x En</label>
+  <select id="boyen-{{ block.id }}" name="boyen" required>
+    <option value="">Seçiniz</option>
+  </select>
+
+  <label for="materyal-{{ block.id }}">Materyal</label>
+  <select id="materyal-{{ block.id }}" name="materyal" required>
+    <option value="">Seçiniz</option>
+  </select>
+
+  <p class="custom-form-error" style="color:red; display:none;">Lütfen tüm alanları doldurunuz.</p>
+
+  <button type="button" class="custom-add-to-cart">Sepete Ekle</button>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", async function () {
+    const container = document.getElementById("custom-product-form-{{ block.id }}");
+    if (!container) return;
+
+    const boyEnSelect = container.querySelector("#boyen-{{ block.id }}");
+    const materyalSelect = container.querySelector("#materyal-{{ block.id }}");
+    const addToCartBtn = container.querySelector(".custom-add-to-cart");
+    const errorBox = container.querySelector(".custom-form-error");
+
+    let variantData = null;
+
+    const API_URL = "https://consumption-stated-scholarships-posts.trycloudflare.com";
+    try {
+      const res = await fetch(API_URL + "/api/custom-variants");
+      const json = await res.json();
+      variantData = json.data;
+
+      // set dimensions
+      variantData.boy_en.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.option;
+        opt.textContent = `${item.option} (${item.price}{{ cart.currency.symbol }})`;
+        opt.dataset.price = item.price;
+        boyEnSelect.appendChild(opt);
+      });
+
+      // Set mateials
+      variantData.material.forEach(item => {
+        const opt = document.createElement("option");
+        opt.value = item.option;
+        opt.textContent = `${item.option} (${item.price} {{ cart.currency.symbol }})`;
+        opt.dataset.price = item.price;
+        materyalSelect.appendChild(opt);
+      });
+    } catch (err) {
+      console.error("Faild to get variants:", err);
+    }
+
+    addToCartBtn.addEventListener("click", async () => {
+      const boyEnOpt = boyEnSelect.options[boyEnSelect.selectedIndex];
+      const materyalOpt = materyalSelect.options[materyalSelect.selectedIndex];
+
+      if (!boyEnOpt.value || !materyalOpt.value) {
+        errorBox.style.display = "block";
+        return;
+      } else {
+        errorBox.style.display = "none";
+      }
+
+      const properties = {
+        "Boy x En": boyEnOpt.value,
+        "Materyal": materyalOpt.value,
+      };
+
+      // Add to cart logic
+      await fetch("/cart/add.js", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{
+            id: {{ block.settings.product.selected_or_first_available_variant.id }},
+            quantity: 1,
+            properties: properties
+          }]
+        })
+      });
+
+      window.location.href = "/cart";
+    });
+  });
+</script>
+
+<style>
+  variant-radios { display: none !important; }
+
+  .custom-product-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+  }
+
+  .custom-product-form select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+  }
+
+  .custom-add-to-cart {
+    background: #000;
+    color: #fff;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .custom-add-to-cart:hover {
+    background: #333;
+  }
+
+  @media (max-width: 768px) {
+    .custom-product-form { max-width: 100%; }
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Custom Variant Form",
+  "target": "section",
+  "settings": [
+    { "type": "product", "id": "product", "label": "Ürün", "autofill": true }
+  ]
+}
+{% endschema %}

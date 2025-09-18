@@ -10,10 +10,10 @@ import {
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 
-export default function AdditionalPage() {
+export default function ActionLogsPage() {
   return (
     <Page>
-      <TitleBar title="Additional page" />
+      <TitleBar title="Action Logs page" />
       <Layout>
         <Layout.Section>
           <Card>

@@ -1,0 +1,4 @@
+name = "variant app"
+type = "theme"
+extension_points = ["product"]
+uid = "19adde4a-7b7c-70c2-216c-f4f8c82dbc7a812f1996"

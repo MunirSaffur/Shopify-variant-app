@@ -22,7 +22,8 @@ export default function App() {
         <Link to="/app" rel="home">
           Home
         </Link>
-        <Link to="/app/additional">Additional page</Link>
+        <Link to="/app/manage-variants">Manage Variants</Link> 
+        <Link to="/app/logs">Action Logs Page</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>
