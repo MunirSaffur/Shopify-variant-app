@@ -23,6 +23,7 @@ export default function App() {
           Home
         </Link>
         <Link to="/app/manage-variants">Manage Variants</Link> 
+        <Link to="/app/create-product">Product Page</Link>
         <Link to="/app/logs">Action Logs Page</Link>
       </NavMenu>
       <Outlet />
