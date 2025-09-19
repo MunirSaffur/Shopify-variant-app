@@ -2,7 +2,7 @@
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import {Page,Card,Text} from "@shopify/polaris";
-import { createProductMutation, createProuductMediaMutation, fetchProductQuery } from "../utils/shopifyQueries";
+import { createProductMutation, createProuductMediaMutation, fetchProductQuery, updateVariantMutation } from "../utils/shopifyQueries";
 
 // --- Main product duplication ---
 export const action = async ({ request }) => {
@@ -19,7 +19,6 @@ export const action = async ({ request }) => {
     const productRes = await admin.graphql(fetchProductQuery, { variables: { id: productId } });
     const productJson = await productRes.json();
 
-    console.log("productJson++++++++++++++++", productJson);
     if (!productJson.data?.product) {
       return json({ error: "Product not found" }, { status: 404 });
     }
@@ -30,12 +29,14 @@ export const action = async ({ request }) => {
     const productInput = {
       title: `${product.title} ${dimension} - ${material}`,
       descriptionHtml: product.descriptionHtml,
-      tags: product.tags,
+      tags: "product-will-be-deleted",
       status: "DRAFT"
     };
 
     const createRes = await admin.graphql(createProductMutation, { variables: { input: productInput } });
     const createJson = await createRes.json();
+
+    const newProductId = createJson.data.productCreate.product.id;
 
     if (createJson.data.productCreate.userErrors.length > 0) {
       return json({ errors: createJson.data.productCreate.userErrors }, { status: 400 });
@@ -50,10 +51,33 @@ export const action = async ({ request }) => {
     // add media to the generated product
     await admin.graphql(createProuductMediaMutation, {
       variables: {
-        productId: createJson.data.productCreate.product.id,
+        productId: newProductId,
         media: mediaInput,
       },
     });
+
+    // create variant with price
+    const variantId = createJson.data.productCreate.product.variants.edges[0].node.id;
+    const updateRes = await admin.graphql(
+    updateVariantMutation,
+      {
+        variables: {
+          productId: createJson.data.productCreate.product.id,
+          variants: [
+            {
+              id: variantId,
+              price: ProductPrice.toString()
+            }
+          ]
+        }
+      }
+    );
+
+    // safe access:
+    const userErrors = updateRes?.data?.productVariantsBulkUpdate?.userErrors || [];
+    if (userErrors.length > 0) {
+      console.error("variant update errors:", userErrors);
+    }
 
     return json({ product: createJson.data.productCreate.product });
   } catch (err) {

@@ -30,6 +30,14 @@ export const createProductMutation = `
         id 
         title 
         handle 
+        variants(first:1) {
+        edges {
+            node {
+            id
+            price
+                }
+            }
+        }
         }
         userErrors { field message }
     }
@@ -53,3 +61,19 @@ export const createProuductMediaMutation = `
   }
 `;
 
+
+export const updateVariantMutation =
+`
+mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+productVariantsBulkUpdate(productId: $productId, variants: $variants) {
+  productVariants {
+    id
+    price
+  }
+  userErrors {
+    field
+    message
+  }
+}
+}
+`;
