@@ -85,13 +85,3 @@ export const action = async ({ request }) => {
     return json({ error: err.message, stack: err.stack }, { status: 500 });
   }
 };
-
-export default function CraeteProduct() {
-  return (
-    <Page title="Create Product API" >
-      <Card sectioned>
-        <Text>New Version</Text>
-      </Card>
-    </Page>
-  )
-}
