@@ -52,6 +52,17 @@ export const createProductMutation = `
     }
 `;
 
+export const deleteProductMutation = `
+mutation DeleteProduct($id: ID!) {
+  productDelete(input: { id: $id }) {
+    deletedProductId
+    userErrors {
+      field
+      message
+    }
+  }
+}`
+
 // craete product media mutation
 export const createProuductMediaMutation = `
   mutation productCreateMedia($productId: ID!, $media: [CreateMediaInput!]!) {

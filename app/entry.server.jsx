@@ -4,6 +4,9 @@ import { RemixServer } from "@remix-run/react";
 import { createReadableStreamFromReadable } from "@remix-run/node";
 import { isbot } from "isbot";
 import { addDocumentResponseHeaders } from "./shopify.server";
+import { startProductCleanupTask } from "./tasks/cleanupProducts";
+
+startProductCleanupTask(); // Start the cleanup task
 
 export const streamTimeout = 5000;
 
