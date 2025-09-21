@@ -1,9 +1,9 @@
-// app/routes/app.create-product.jsx
 import { json } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { createProductMutation, createProuductMediaMutation, fetchProductQuery, createVariantMutation, fetchSalesChannelsQuery, fetchPublishablePublisMutation, fetchLocationQuery } from "../utils/shopifyQueries";
+import db from "../db.server";
 
-// --- Main product duplication ---
+
 export const action = async ({ request }) => {
   try {
     console.log("➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️➡️");
@@ -44,6 +44,13 @@ export const action = async ({ request }) => {
 
     // get the new product ID
     const newProductId = newProductJson.data.productCreate.product.id;
+
+    // create the record to Product model (api/product-list)
+    const createdAt = new Date();
+    const deleteTime = new Date(createdAt.getTime() + 2 * 60 * 60 * 1000); // 2 hours later
+    await db.product.create({
+      data: { productId: newProductId, createdAt, deleteTime },
+    });
 
     // prepare media input
     const mediaInput = product.images.edges.map(({ node }) => ({

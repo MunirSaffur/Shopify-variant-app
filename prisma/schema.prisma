@@ -43,3 +43,10 @@ model Material {
   option  String
   price   Int
 }
+
+model Product {
+  id          Int       @id @default(autoincrement())
+  productId   String
+  createdAt   DateTime  @default(now())
+  deleteTime  DateTime
+}
