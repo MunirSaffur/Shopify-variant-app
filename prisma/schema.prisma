@@ -33,20 +33,26 @@ model Session {
 
 
 model Dimension {
-  id      Int    @id @default(autoincrement())
-  option  String
-  multiple   Int
+  id        Int @id @default(autoincrement())
+  option    String
+  multiple  Int
 }
 
 model Material {
-  id      Int    @id @default(autoincrement())
+  id      Int @id @default(autoincrement())
   option  String
   price   Int
 }
 
 model Product {
-  id          Int       @id @default(autoincrement())
+  id          Int @id @default(autoincrement())
   productId   String
   createdAt   DateTime  @default(now())
   deleteTime  DateTime
+}
+
+model History {
+  id        Int @id @default(autoincrement())
+  action    String
+  createdAt DateTime? @default(now())
 }

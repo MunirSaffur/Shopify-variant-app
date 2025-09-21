@@ -88,7 +88,7 @@ export default function CreatedProductList() {
     ]);
 
     return (
-        <Page title="Created Products">
+        <Page title="Created Product List">
             {products.length === 0 ? (
                 <LegacyCard sectioned>
                     <EmptyState

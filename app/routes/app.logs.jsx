@@ -1,83 +1,59 @@
-import {
-  Box,
-  Card,
-  Layout,
-  Link,
-  List,
-  Page,
-  Text,
-  BlockStack,
-} from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
+// app/routes/app.created-product-list.jsx
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+import { Page, Card, DataTable, LegacyCard, EmptyState } from "@shopify/polaris";
+import  db  from "../db.server";
 
-export default function ActionLogsPage() {
-  return (
-    <Page>
-      <TitleBar title="Action Logs page" />
-      <Layout>
-        <Layout.Section>
-          <Card>
-            <BlockStack gap="300">
-              <Text as="p" variant="bodyMd">
-                The app template comes with an additional page which
-                demonstrates how to create multiple pages within app navigation
-                using{" "}
-                <Link
-                  url="https://shopify.dev/docs/apps/tools/app-bridge"
-                  target="_blank"
-                  removeUnderline
-                >
-                  App Bridge
-                </Link>
-                .
-              </Text>
-              <Text as="p" variant="bodyMd">
-                To create your own page and have it show up in the app
-                navigation, add a page inside <Code>app/routes</Code>, and a
-                link to it in the <Code>&lt;NavMenu&gt;</Code> component found
-                in <Code>app/routes/app.jsx</Code>.
-              </Text>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-        <Layout.Section variant="oneThird">
-          <Card>
-            <BlockStack gap="200">
-              <Text as="h2" variant="headingMd">
-                Resources
-              </Text>
-              <List>
-                <List.Item>
-                  <Link
-                    url="https://shopify.dev/docs/apps/design-guidelines/navigation#app-nav"
-                    target="_blank"
-                    removeUnderline
-                  >
-                    App nav best practices
-                  </Link>
-                </List.Item>
-              </List>
-            </BlockStack>
-          </Card>
-        </Layout.Section>
-      </Layout>
-    </Page>
-  );
-}
+// loader
+export const loader = async ({ request }) => {
+    try {  
+      // Fetch logs from DB
+      const logList = await db.history.findMany({
+        select: { id: true, action: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      });
+  
+      return json({ logs: logList || [] });
+    } catch (err) {
+      console.error(err);
+      return json({ products: [], error: err.message }, { status: 500 });
+    }
+  };
+  
 
-function Code({ children }) {
-  return (
-    <Box
-      as="span"
-      padding="025"
-      paddingInlineStart="100"
-      paddingInlineEnd="100"
-      background="bg-surface-active"
-      borderWidth="025"
-      borderColor="border"
-      borderRadius="100"
-    >
-      <code>{children}</code>
-    </Box>
-  );
+// component
+export default function CreatedProductList() {
+    const { logs = [] } = useLoaderData();
+
+    console.log("logs", logs)
+
+    const rows = logs.map((l) => [
+        l.action,
+        l.createdAt ? new Date(l.createdAt).toLocaleString() : "",
+    ]);
+
+    return (
+        <Page title="Log List">
+            {logs.length === 0 ? (
+                <LegacyCard sectioned>
+                    <EmptyState
+                        heading="No products created yet"
+                        action={{ content: 'Check action logs', url: '/app/logs' }}
+                        image="https://cdn.shopify.com/s/files/1/0262/4071/2726/files/emptystate-files.png"
+                    >
+                        <p>Track and receive products created by the side of your customers.</p>
+                    </EmptyState>
+                </LegacyCard>) :
+                (
+                    <Card>
+                        <DataTable
+                            columnContentTypes={["text", "text"]}
+                            headings={["Action", "Created At"]}
+                            rows={rows}
+                        />
+                    </Card>
+                )
+            }
+        </Page>
+    );
 }

@@ -52,6 +52,11 @@ export const action = async ({ request }) => {
       data: { productId: newProductId, createdAt, deleteTime },
     });
 
+    // add log to app db
+    await db.history.create({
+      data: { action: "New Product created" },
+    });
+
     // prepare media input
     const mediaInput = product.images.edges.map(({ node }) => ({
       originalSource: node.originalSrc,
