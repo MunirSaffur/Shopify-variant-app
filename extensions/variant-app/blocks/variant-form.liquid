@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // get variant data from app server
   try {
-    const res = await fetch("https://translator-cathedral-compile-spotlight.trycloudflare.com/api/custom-variants");
+    const res = await fetch("https://warranty-cyber-announces-lot.trycloudflare.com/api/custom-variants");
     const json = await res.json();
     const data = json.data;
 
@@ -93,36 +93,57 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   //  Add to Cart logic
-  const addBtn = document.querySelector("form[action*='/cart/add'] [type='submit']");
-  if (addBtn) {
-    addBtn.addEventListener("click", async e => {
-      e.preventDefault();
-      if (!dimensionSelector.value || !materyalSelector.value) {
-        errorBox.style.display = "block";
-      } else {
-        // Create a temp product
-        const id = {{product.id}}
-          const createres = await fetch("/apps/create-product", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify({ productId: `gid://shopify/Product/${id}`, dimension: dimensionSelector.value, material: materyalSelector.value, ProductPrice: (basePrice * currentMultiple) + materialExtra }),
-        }); 
+const addBtn = document.querySelector("form[action*='/cart/add'] [type='submit']");
 
-        errorBox.style.display = "none";
-        const form = addBtn.closest("form");
-        ["Boy x En","Materyal"].forEach(name => {
-          const old = form.querySelector(`input[name="properties[${name}]"]`);
-          if (old) old.remove();
-        });
-        const bx = document.createElement("input");
-        bx.type="hidden"; bx.name="properties[Boy x En]"; bx.value=dimensionSelector.value;
-        form.appendChild(bx);
-        const mt = document.createElement("input");
-        mt.type="hidden"; mt.name="properties[Materyal]"; mt.value=materyalSelector.value;
-        form.appendChild(mt);
-      }
+if (addBtn) {
+  addBtn.addEventListener("click", async e => {
+    e.preventDefault();
+
+    if (!dimensionSelector.value || !materyalSelector.value) {
+      errorBox.style.display = "block";
+      return;
+    }
+
+    // Create a temp product
+    const id = {{ product.id }};
+    const variantssss = {{ product.variants | json }};
+    console.log("Product ID:", id, "Variants:", variantssss);
+    const createProductRes = await fetch("/apps/create-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({
+        productId: `gid://shopify/Product/${id}`,
+        dimension: dimensionSelector.value,
+        material: materyalSelector.value,
+        ProductPrice: (basePrice * currentMultiple) + materialExtra,
+      }),
     });
-  }
+
+    const createProductResJson = await createProductRes.json();
+
+    const variantId = createProductResJson.variants[0].id;
+    const numericVariantId = variantId.split("/").pop();
+
+    // Add to cart
+    const cartRes = await fetch("/cart/add.js", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        items: [
+          {
+            id: numericVariantId,
+            quantity: 1,
+          },
+        ],
+      }),
+    });
+
+    const cartJson = await cartRes.json();
+
+    // Hide error box if success
+    errorBox.style.display = "none";
+  });
+}
 });
 </script>
 

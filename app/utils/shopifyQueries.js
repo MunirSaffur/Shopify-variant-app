@@ -6,14 +6,14 @@ export const fetchProductQuery = `
         descriptionHtml
         tags
         images(first: 5) { edges { node { originalSrc altText } } }
-        variants(first: 1) {
+        variants(first: 5) {
         edges {
           node {
             id
             title
             price
-            sku
             inventoryPolicy
+            inventoryQuantity
           }
         }
       }
@@ -29,8 +29,16 @@ export const createProductMutation = `
         product { 
         id 
         title 
-        handle 
-        variants(first:1) {
+        options {
+          id
+          name
+          optionValues {
+            id
+            name
+            hasVariants
+          }
+        } 
+        variants(first:10) {
         edges {
             node {
             id
@@ -62,18 +70,79 @@ export const createProuductMediaMutation = `
 `;
 
 
-export const updateVariantMutation =
+export const createVariantMutation =
 `
-mutation productVariantsBulkUpdate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
-productVariantsBulkUpdate(productId: $productId, variants: $variants) {
-  productVariants {
-    id
-    price
+#graphql
+  mutation ProductVariantsCreate($productId: ID!, $variants: [ProductVariantsBulkInput!]!) {
+    productVariantsBulkCreate(productId: $productId, variants: $variants) {
+      productVariants {
+        id
+        title
+        selectedOptions {
+          name
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
   }
-  userErrors {
-    field
-    message
-  }
-}
-}
 `;
+
+
+export const fetchLocationsQuery = `
+  query getLocations {
+    locations(first: 1) {
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const fetchSalesChannelsQuery = `#graphql
+        query publications {
+          publications(first: 3) {
+            edges {
+              node {
+                id
+                name
+                autoPublish
+                supportsFuturePublishing
+              }
+            }
+          }
+        }`
+
+export const fetchPublishablePublisMutation = `#graphql
+  mutation PublishablePublish($id: ID!, $publicationId: ID!) {
+    publishablePublish(id: $id, input: { publicationId: $publicationId }) {
+      publishable {
+        publishedOnPublication(publicationId: $publicationId)
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }`
+
+  export const fetchLocationQuery = `#graphql
+        query {
+          locations(first: 5) {
+            edges {
+              node {
+                id
+                name
+                address {
+                  formatted
+                }
+              }
+            }
+          }
+        }`
