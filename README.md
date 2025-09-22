@@ -34,10 +34,10 @@ npm run dev
 
 
 
-After every npm run dev kindly chacnge the application_url in:
+After every npm run dev kindly change the application_url in:
 
-1. shopify.app.toml file in line: 30 and keep /app/create-product in the last of it.
-2. extentions>blocks>variant-form.liquid file in line 61 and keep /api/custom-variants in the last of it
+1. shopify.app.toml file in line: 30 and keep /app/create-product in the end of it.
+2. extentions>blocks>variant-form.liquid file in line 61 and keep /api/custom-variants in the end of it
 
 
 # Shopify-variant-app
