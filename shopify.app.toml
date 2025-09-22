@@ -27,6 +27,6 @@ scopes = "read_products,write_products,read_locations,write_inventory,write_publ
 redirect_urls = [ "https://example.com/api/auth" ]
 
 [app_proxy]
-url = "https://challenges-admissions-sells-website.trycloudflare.com/app/create-product"
+url = "https://efficient-common-thu-motion.trycloudflare.com/app/create-product"
 subpath = "create-product"
 prefix = "apps"

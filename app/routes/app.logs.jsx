@@ -25,8 +25,6 @@ export const loader = async ({ request }) => {
 export default function CreatedProductList() {
     const { logs = [] } = useLoaderData();
 
-    console.log("logs", logs)
-
     const rows = logs.map((l) => [
         l.action,
         l.createdAt ? new Date(l.createdAt).toLocaleString() : "",
@@ -48,7 +46,7 @@ export default function CreatedProductList() {
                     <Card>
                         <DataTable
                             columnContentTypes={["text", "text"]}
-                            headings={["Action", "Created At"]}
+                            headings={["Action", "Recorded On"]}
                             rows={rows}
                         />
                     </Card>

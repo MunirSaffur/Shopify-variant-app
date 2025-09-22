@@ -6,7 +6,6 @@ import { isbot } from "isbot";
 import { addDocumentResponseHeaders } from "./shopify.server";
 import { startProductCleanupTask } from "./tasks/cleanupProducts";
 
-startProductCleanupTask(); // Start the cleanup task
 
 export const streamTimeout = 5000;
 
@@ -16,6 +15,8 @@ export default async function handleRequest(
   responseHeaders,
   remixContext,
 ) {
+  startProductCleanupTask(); // Start the cleanup task
+
   addDocumentResponseHeaders(request, responseHeaders);
   const userAgent = request.headers.get("user-agent");
   const callbackName = isbot(userAgent ?? "") ? "onAllReady" : "onShellReady";
